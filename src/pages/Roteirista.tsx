@@ -284,7 +284,7 @@ export default function Roteirista() {
       await sendWhatsAppMessage(selectedEntregador.telefone, message, {
         franquiaId: user?.franquiaId ?? null,
         unidadeId: null,
-      });
+      }, { whatsappAtivo: selectedEntregador.whatsapp_ativo !== false });
 
       toast.success(`${selectedEntregador.nome} foi chamado com ${deliveryCount} entrega(s)!`);
       setCallDialogOpen(false);
@@ -301,7 +301,7 @@ export default function Roteirista() {
              await sendWhatsAppMessage(secondInQueue.telefone, alertMessage, {
                franquiaId: user?.franquiaId ?? null,
                unidadeId: null,
-             });
+             }, { whatsappAtivo: secondInQueue.whatsapp_ativo !== false });
              toast.info(`Alerta enviado para ${secondInQueue.nome}`);
            } catch (error) {
             console.error('Erro ao enviar alerta para segundo da fila:', error);
@@ -344,7 +344,7 @@ export default function Roteirista() {
       await sendWhatsAppMessage(actionEntregador.telefone, message, {
         franquiaId: user?.franquiaId ?? null,
         unidadeId: null,
-      });
+      }, { whatsappAtivo: actionEntregador.whatsapp_ativo !== false });
 
       toast.success(`Mensagem enviada para ${actionEntregador.nome}`);
       setCallMotoboyOpen(false);

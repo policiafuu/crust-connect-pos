@@ -104,6 +104,7 @@ export default function Config() {
     usar_turno_padrao: true,
     turno_inicio: TURNO_PADRAO.inicio.slice(0, 5),
     turno_fim: TURNO_PADRAO.fim.slice(0, 5),
+    whatsapp_ativo: true,
   });
 
   // Filtros
@@ -252,6 +253,7 @@ export default function Config() {
       usar_turno_padrao: true,
       turno_inicio: TURNO_PADRAO.inicio.slice(0, 5),
       turno_fim: TURNO_PADRAO.fim.slice(0, 5),
+      whatsapp_ativo: true,
     });
     setEditingEntregador(null);
     setIsFormOpen(false);
@@ -279,6 +281,7 @@ export default function Config() {
           usar_turno_padrao: formData.usar_turno_padrao,
           turno_inicio: turnoInicio,
           turno_fim: turnoFim,
+          whatsapp_ativo: formData.whatsapp_ativo,
         },
       });
     } else {
@@ -306,6 +309,7 @@ export default function Config() {
       usar_turno_padrao: entregador.usar_turno_padrao !== false,
       turno_inicio: entregador.turno_inicio?.slice(0, 5) || TURNO_PADRAO.inicio.slice(0, 5),
       turno_fim: entregador.turno_fim?.slice(0, 5) || TURNO_PADRAO.fim.slice(0, 5),
+      whatsapp_ativo: entregador.whatsapp_ativo !== false,
     });
     setIsGeneratingVoice(false);
     setIsFormOpen(true);
@@ -1170,7 +1174,26 @@ export default function Config() {
               )}
             </div>
 
-            {/* Voz fixa ElevenLabs por motoboy */}
+            {/* WhatsApp ativo/inativo */}
+            <div className="space-y-2">
+              <Label>WhatsApp</Label>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="whatsapp-ativo"
+                  checked={formData.whatsapp_ativo}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({ ...prev, whatsapp_ativo: checked }))
+                  }
+                />
+                <Label htmlFor="whatsapp-ativo" className="text-sm font-normal cursor-pointer">
+                  {formData.whatsapp_ativo ? 'Mensagens WhatsApp ativadas' : 'Mensagens WhatsApp desativadas'}
+                </Label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Quando desativado, nenhuma mensagem será enviada via WhatsApp (Evolution API) para este motoboy.
+              </p>
+            </div>
+
             {editingEntregador && (
               <div className="space-y-3 border border-border rounded-lg p-4 bg-secondary/40">
                 <div className="flex items-center justify-between gap-2">
