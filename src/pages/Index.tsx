@@ -1,122 +1,167 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { FormEvent, useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { useUnit } from '@/contexts/UnitContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { Users, Lock } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, Store, Globe, ShoppingCart, TrendingUp } from "lucide-react";
-import { Link } from "react-router-dom";
+export default function Index() {
+  const navigate = useNavigate();
+  const { setSelectedUnit } = useUnit();
+  const { login } = useAuth();
+ 
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [modeDialogOpen, setModeDialogOpen] = useState(false);
 
-const Index = () => {
+  const displayName = 'FilaLab';
+
+  const handleLogin = async (e: FormEvent) => {
+    e.preventDefault();
+ 
+    if (!username.trim() || !password.trim()) {
+      toast.error('Informe login e senha.');
+      return;
+    }
+ 
+    setIsSubmitting(true);
+    const loggedUser = await login(username, password);
+    setIsSubmitting(false);
+ 
+    if (!loggedUser) {
+      toast.error('Login inválido. Verifique usuário e senha.');
+      return;
+    }
+ 
+    // Garante que a unidade selecionada siga a unidade do usuário logado
+    setSelectedUnit(loggedUser.unidade);
+ 
+    toast.success('Login realizado com sucesso.');
+ 
+    if (loggedUser.role === 'super_admin') {
+      navigate('/admin');
+      return;
+    }
+
+    // Se for admin de franquia e a franquia estiver bloqueada, vai direto para o Financeiro
+    if (loggedUser.role === 'admin_franquia' && loggedUser.franquiaId) {
+      const { data, error } = await supabase
+        .from('franquias')
+        .select('status_pagamento')
+        .eq('id', loggedUser.franquiaId)
+        .maybeSingle();
+
+      if (!error && data && data.status_pagamento && ['inadimplente', 'inativo'].includes(data.status_pagamento)) {
+        navigate('/config?tab=financeiro&bloqueio=1');
+        return;
+      }
+    }
+ 
+    setModeDialogOpen(true);
+  };
+  const goToRoteirista = () => {
+    setModeDialogOpen(false);
+    navigate('/roteirista');
+  };
+
+  const goToTv = () => {
+    setModeDialogOpen(false);
+    navigate('/tv');
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary-light/10 to-delivery-light/10">
-      <div className="container mx-auto px-4 py-16">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <div className="mb-8">
-            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-hero text-white shadow-elevated">
-              <Store className="h-6 w-6" />
-              <span className="font-bold text-lg">Bella Napoli Multi-Store</span>
-            </div>
-          </div>
-          
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary via-delivery to-premium bg-clip-text text-transparent">
-            Sistema PDV + E-commerce
-          </h1>
-          
-          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-            Plataforma SaaS completa para pizzarias com PDV integrado, e-commerce online, 
-            distribuição inteligente de pedidos e gestão multi-loja.
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="w-full max-w-md sm:max-w-xl bg-card border border-border rounded-2xl shadow-lg p-6 sm:p-8 space-y-8">
+        <header className="text-center space-y-2">
+          <h1 className="text-2xl font-mono font-bold">{displayName}</h1>
+          <p className="text-sm text-muted-foreground">
+            Acesse o sistema com seu usuário e senha.
           </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild variant="hero" size="xl">
-              <Link to="/dashboard">
-                <TrendingUp className="h-5 w-5 mr-2" />
-                Acessar Dashboard
-                <ArrowRight className="h-5 w-5 ml-2" />
-              </Link>
+        </header>
+
+        <section className="space-y-6">
+          <form className="space-y-6" onSubmit={handleLogin}>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                <Lock className="w-4 h-4" /> Login de despacho
+              </Label>
+              <div className="grid grid-cols-1 gap-3">
+                <Input
+                  placeholder="Usuário"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="username"
+                />
+                <Input
+                  type="password"
+                  placeholder="Senha"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                />
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full h-12 text-base font-mono flex items-center justify-center gap-2"
+            >
+              {isSubmitting && <Users className="w-4 h-4 animate-spin" />}
+              <span>Entrar</span>
             </Button>
-            
-            <Button asChild variant="outline" size="xl">
-              <Link to="/pdv">
-                <ShoppingCart className="h-5 w-5 mr-2" />
-                Abrir PDV
-              </Link>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-10 text-xs mt-1"
+              onClick={() => navigate('/register')}
+            >
+              Criar nova conta · 7 dias grátis
+            </Button>
+          </form>
+        </section>
+
+        <footer className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>FilaLab • Acesso restrito</span>
+          <Link to="/meu-lugar" className="hover:underline">
+            Sou motoboy
+          </Link>
+        </footer>
+      </div>
+
+      <Dialog open={modeDialogOpen} onOpenChange={setModeDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-mono">Escolha o modo de trabalho</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 sm:grid-cols-2 mt-4">
+            <Button
+              type="button"
+              onClick={goToRoteirista}
+              className="h-20 text-lg font-mono flex flex-col items-center justify-center gap-1"
+            >
+              <Users className="w-6 h-6" />
+              <span>Roteirizador</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={goToTv}
+              className="h-20 text-lg font-mono flex flex-col items-center justify-center gap-1"
+            >
+              <span>Modo TV</span>
             </Button>
           </div>
-        </div>
-
-        {/* Features Cards */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          <Card className="shadow-card hover:shadow-elevated transition-smooth">
-            <CardHeader>
-              <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mb-4">
-                <ShoppingCart className="h-6 w-6 text-white" />
-              </div>
-              <CardTitle>PDV Completo</CardTitle>
-              <CardDescription>
-                Sistema de ponto de venda com impressão térmica, gestão de comandas e controle de estoque
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild variant="pdv" size="sm" className="w-full">
-                <Link to="/pdv">Usar PDV</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card hover:shadow-elevated transition-smooth">
-            <CardHeader>
-              <div className="w-12 h-12 bg-gradient-delivery rounded-lg flex items-center justify-center mb-4">
-                <Globe className="h-6 w-6 text-white" />
-              </div>
-              <CardTitle>E-commerce Online</CardTitle>
-              <CardDescription>
-                Loja online sincronizada com PDV, pedidos delivery e integração com marketplaces
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild variant="delivery" size="sm" className="w-full">
-                <Link to="/ecommerce">Ver Loja Online</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card hover:shadow-elevated transition-smooth">
-            <CardHeader>
-              <div className="w-12 h-12 bg-gradient-premium rounded-lg flex items-center justify-center mb-4">
-                <Store className="h-6 w-6 text-white" />
-              </div>
-              <CardTitle>Multi-loja SaaS</CardTitle>
-              <CardDescription>
-                Gestão de múltiplas pizzarias, relatórios consolidados e distribuição inteligente de pedidos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild variant="premium" size="sm" className="w-full">
-                <Link to="/admin">Painel Admin</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Demo Notice */}
-        <div className="text-center">
-          <Card className="inline-block shadow-card border-2 border-primary/20">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 text-primary mb-2">
-                <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
-                <span className="font-semibold">Demo em Tempo Real</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Esta é uma demonstração completa com dados fictícios. 
-                Todas as funcionalidades estão operacionais para testes.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
-};
-
-export default Index;
+}
