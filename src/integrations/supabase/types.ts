@@ -16,7 +16,6 @@ export type Database = {
     Tables: {
       api_keys: {
         Row: {
-          api_key_hash: string
           ativo: boolean
           created_at: string
           descricao: string | null
@@ -26,7 +25,6 @@ export type Database = {
           revoked_at: string | null
         }
         Insert: {
-          api_key_hash: string
           ativo?: boolean
           created_at?: string
           descricao?: string | null
@@ -36,7 +34,6 @@ export type Database = {
           revoked_at?: string | null
         }
         Update: {
-          api_key_hash?: string
           ativo?: boolean
           created_at?: string
           descricao?: string | null
@@ -49,34 +46,37 @@ export type Database = {
       }
       auth_refresh_tokens: {
         Row: {
-          created_at: string
-          expires_at: string
+          created_at: string | null
+          expires_at: string | null
           id: string
           ip: string | null
-          revoked_at: string | null
-          token_hash: string
+          revoked: boolean | null
+          token: string | null
+          token_hash: string | null
           user_agent: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
-          created_at?: string
-          expires_at: string
+          created_at?: string | null
+          expires_at?: string | null
           id?: string
           ip?: string | null
-          revoked_at?: string | null
-          token_hash: string
+          revoked?: boolean | null
+          token?: string | null
+          token_hash?: string | null
           user_agent?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
-          created_at?: string
-          expires_at?: string
+          created_at?: string | null
+          expires_at?: string | null
           id?: string
           ip?: string | null
-          revoked_at?: string | null
-          token_hash?: string
+          revoked?: boolean | null
+          token?: string | null
+          token_hash?: string | null
           user_agent?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -108,6 +108,7 @@ export type Database = {
           unidade_id: string | null
           updated_at: string
           usar_turno_padrao: boolean | null
+          whatsapp_ativo: boolean | null
         }
         Insert: {
           ativo?: boolean
@@ -128,6 +129,7 @@ export type Database = {
           unidade_id?: string | null
           updated_at?: string
           usar_turno_padrao?: boolean | null
+          whatsapp_ativo?: boolean | null
         }
         Update: {
           ativo?: boolean
@@ -148,6 +150,7 @@ export type Database = {
           unidade_id?: string | null
           updated_at?: string
           usar_turno_padrao?: boolean | null
+          whatsapp_ativo?: boolean | null
         }
         Relationships: [
           {
@@ -206,37 +209,25 @@ export type Database = {
           created_at: string
           external_id: string
           franquia_id: string
-          gateway: string
           id: string
-          payload: Json | null
           status: string
-          updated_at: string
           valor: number
-          vencimento: string | null
         }
         Insert: {
           created_at?: string
           external_id: string
           franquia_id: string
-          gateway: string
           id?: string
-          payload?: Json | null
-          status: string
-          updated_at?: string
-          valor: number
-          vencimento?: string | null
+          status?: string
+          valor?: number
         }
         Update: {
           created_at?: string
           external_id?: string
           franquia_id?: string
-          gateway?: string
           id?: string
-          payload?: Json | null
           status?: string
-          updated_at?: string
           valor?: number
-          vencimento?: string | null
         }
         Relationships: [
           {
@@ -400,10 +391,6 @@ export type Database = {
           detalhes: Json | null
           franquia_id: string | null
           id: string
-          ip: string | null
-          unidade_id: string | null
-          user_agent: string | null
-          user_id: string | null
           usuario_email: string | null
         }
         Insert: {
@@ -412,10 +399,6 @@ export type Database = {
           detalhes?: Json | null
           franquia_id?: string | null
           id?: string
-          ip?: string | null
-          unidade_id?: string | null
-          user_agent?: string | null
-          user_id?: string | null
           usuario_email?: string | null
         }
         Update: {
@@ -424,10 +407,6 @@ export type Database = {
           detalhes?: Json | null
           franquia_id?: string | null
           id?: string
-          ip?: string | null
-          unidade_id?: string | null
-          user_agent?: string | null
-          user_id?: string | null
           usuario_email?: string | null
         }
         Relationships: [
@@ -438,27 +417,13 @@ export type Database = {
             referencedRelation: "franquias"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "logs_auditoria_unidade_id_fkey"
-            columns: ["unidade_id"]
-            isOneToOne: false
-            referencedRelation: "unidades"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "logs_auditoria_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "system_users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       modulos: {
         Row: {
           ativo: boolean | null
           codigo: string
-          created_at: string | null
+          created_at: string
           descricao: string | null
           id: string
           nome: string
@@ -467,7 +432,7 @@ export type Database = {
         Insert: {
           ativo?: boolean | null
           codigo: string
-          created_at?: string | null
+          created_at?: string
           descricao?: string | null
           id?: string
           nome: string
@@ -476,7 +441,7 @@ export type Database = {
         Update: {
           ativo?: boolean | null
           codigo?: string
-          created_at?: string | null
+          created_at?: string
           descricao?: string | null
           id?: string
           nome?: string
@@ -488,41 +453,38 @@ export type Database = {
         Row: {
           ativo: boolean | null
           codigo: string
-          created_at: string | null
+          created_at: string
           desconto_percent: number | null
           descricao: string | null
           id: string
-          modulos_inclusos: Json | null
+          modulos_inclusos: string[] | null
           nome: string
           plano_id: string | null
           preco_total: number
-          updated_at: string | null
         }
         Insert: {
           ativo?: boolean | null
           codigo: string
-          created_at?: string | null
+          created_at?: string
           desconto_percent?: number | null
           descricao?: string | null
           id?: string
-          modulos_inclusos?: Json | null
+          modulos_inclusos?: string[] | null
           nome: string
           plano_id?: string | null
-          preco_total: number
-          updated_at?: string | null
+          preco_total?: number
         }
         Update: {
           ativo?: boolean | null
           codigo?: string
-          created_at?: string | null
+          created_at?: string
           desconto_percent?: number | null
           descricao?: string | null
           id?: string
-          modulos_inclusos?: Json | null
+          modulos_inclusos?: string[] | null
           nome?: string
           plano_id?: string | null
           preco_total?: number
-          updated_at?: string | null
         }
         Relationships: [
           {
@@ -576,78 +538,48 @@ export type Database = {
         }
         Relationships: []
       }
-      rate_limits: {
-        Row: {
-          count: number
-          id: string
-          ip: string
-          key: string
-          last_request_at: string
-          route: string
-          window_start: string
-        }
-        Insert: {
-          count?: number
-          id?: string
-          ip: string
-          key: string
-          last_request_at?: string
-          route: string
-          window_start: string
-        }
-        Update: {
-          count?: number
-          id?: string
-          ip?: string
-          key?: string
-          last_request_at?: string
-          route?: string
-          window_start?: string
-        }
-        Relationships: []
-      }
       senhas_pagamento: {
         Row: {
           atendido_em: string | null
           chamado_em: string | null
-          created_at: string | null
+          created_at: string
           entregador_id: string | null
           entregador_nome: string | null
           expira_em: string
           franquia_id: string
           id: string
           numero_senha: string
-          status: string | null
+          status: string
           unidade_id: string
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
           atendido_em?: string | null
           chamado_em?: string | null
-          created_at?: string | null
+          created_at?: string
           entregador_id?: string | null
           entregador_nome?: string | null
           expira_em?: string
           franquia_id: string
           id?: string
           numero_senha: string
-          status?: string | null
+          status?: string
           unidade_id: string
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
           atendido_em?: string | null
           chamado_em?: string | null
-          created_at?: string | null
+          created_at?: string
           entregador_id?: string | null
           entregador_nome?: string | null
           expira_em?: string
           franquia_id?: string
           id?: string
           numero_senha?: string
-          status?: string | null
+          status?: string
           unidade_id?: string
-          updated_at?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -792,8 +724,8 @@ export type Database = {
       }
       unidade_modulos: {
         Row: {
-          ativo: boolean | null
-          created_at: string | null
+          ativo: boolean
+          created_at: string
           data_ativacao: string | null
           data_expiracao: string | null
           id: string
@@ -801,8 +733,8 @@ export type Database = {
           unidade_id: string
         }
         Insert: {
-          ativo?: boolean | null
-          created_at?: string | null
+          ativo?: boolean
+          created_at?: string
           data_ativacao?: string | null
           data_expiracao?: string | null
           id?: string
@@ -810,8 +742,8 @@ export type Database = {
           unidade_id: string
         }
         Update: {
-          ativo?: boolean | null
-          created_at?: string | null
+          ativo?: boolean
+          created_at?: string
           data_ativacao?: string | null
           data_expiracao?: string | null
           id?: string
@@ -821,44 +753,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "unidade_modulos_unidade_id_fkey"
-            columns: ["unidade_id"]
-            isOneToOne: false
-            referencedRelation: "unidades"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      unidade_payment_config: {
-        Row: {
-          ativo: boolean
-          config: Json
-          created_at: string
-          gateway: string
-          id: string
-          unidade_id: string
-          updated_at: string
-        }
-        Insert: {
-          ativo?: boolean
-          config?: Json
-          created_at?: string
-          gateway: string
-          id?: string
-          unidade_id: string
-          updated_at?: string
-        }
-        Update: {
-          ativo?: boolean
-          config?: Json
-          created_at?: string
-          gateway?: string
-          id?: string
-          unidade_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "unidade_payment_config_unidade_id_fkey"
             columns: ["unidade_id"]
             isOneToOne: false
             referencedRelation: "unidades"
@@ -982,84 +876,33 @@ export type Database = {
           },
         ]
       }
-      whatsapp_historico: {
-        Row: {
-          created_at: string | null
-          entregador_id: string | null
-          enviado_em: string | null
-          id: string
-          mensagem: string
-          telefone: string
-          tipo: string | null
-          unidade_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          entregador_id?: string | null
-          enviado_em?: string | null
-          id?: string
-          mensagem: string
-          telefone: string
-          tipo?: string | null
-          unidade_id: string
-        }
-        Update: {
-          created_at?: string | null
-          entregador_id?: string | null
-          enviado_em?: string | null
-          id?: string
-          mensagem?: string
-          telefone?: string
-          tipo?: string | null
-          unidade_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "whatsapp_historico_entregador_id_fkey"
-            columns: ["entregador_id"]
-            isOneToOne: false
-            referencedRelation: "entregadores"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "whatsapp_historico_unidade_id_fkey"
-            columns: ["unidade_id"]
-            isOneToOne: false
-            referencedRelation: "unidades"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       whatsapp_templates: {
         Row: {
-          ativo: boolean | null
+          ativo: boolean
           codigo: string
-          created_at: string | null
+          created_at: string
           id: string
           mensagem: string
           titulo: string
           unidade_id: string
-          updated_at: string | null
         }
         Insert: {
-          ativo?: boolean | null
+          ativo?: boolean
           codigo: string
-          created_at?: string | null
+          created_at?: string
           id?: string
           mensagem: string
           titulo: string
           unidade_id: string
-          updated_at?: string | null
         }
         Update: {
-          ativo?: boolean | null
+          ativo?: boolean
           codigo?: string
-          created_at?: string | null
+          created_at?: string
           id?: string
           mensagem?: string
           titulo?: string
           unidade_id?: string
-          updated_at?: string | null
         }
         Relationships: [
           {
