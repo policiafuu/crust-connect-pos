@@ -712,7 +712,7 @@ export default function TV() {
       await sendWhatsAppMessage(entregador.telefone, whatsappMessage, {
         franquiaId: user.franquiaId ?? null,
         unidadeId: null,
-      });
+      }, { whatsappAtivo: entregador.whatsapp_ativo !== false });
       
       refetch();
       refetchHistorico();

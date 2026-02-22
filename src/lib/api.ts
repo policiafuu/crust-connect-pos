@@ -254,11 +254,19 @@ export async function deleteEntregador(id: string): Promise<void> {
 }
 
 // Send WhatsApp message via Edge Function
+// Respects the entregador's whatsapp_ativo flag when provided
 export async function sendWhatsAppMessage(
   telefone: string,
   message: string,
-  context?: { franquiaId?: string | null; unidadeId?: string | null }
+  context?: { franquiaId?: string | null; unidadeId?: string | null },
+  options?: { whatsappAtivo?: boolean }
 ): Promise<void> {
+  // If whatsapp_ativo is explicitly false, skip sending
+  if (options?.whatsappAtivo === false) {
+    console.log(`WhatsApp desativado para ${telefone}, mensagem não enviada.`);
+    return;
+  }
+
   const { error } = await supabase.functions.invoke('send-whatsapp', {
     body: {
       telefone,
@@ -711,19 +719,21 @@ export async function gerarSenhaPagamento(
     // Buscar telefone e nome do entregador, se existir vínculo
     let telefone: string | null = null;
     let nomeMotoboy: string | null = senha.entregador_nome;
+    let whatsappAtivo = true;
 
     if (senha.entregador_id) {
-      const { data: entregador, error: entregadorError } = await supabase
+      const { data: entregador, error: entregadorError } = await (supabase
         .from('entregadores')
-        .select('telefone, nome')
+        .select('telefone, nome, whatsapp_ativo')
         .eq('id', senha.entregador_id)
-        .maybeSingle();
+        .maybeSingle() as any);
 
       if (entregadorError) {
         console.error('Erro ao buscar entregador ao gerar senha de pagamento:', entregadorError);
       } else if (entregador) {
         telefone = entregador.telefone as string;
         nomeMotoboy = (entregador.nome as string) || nomeMotoboy;
+        whatsappAtivo = entregador.whatsapp_ativo !== false;
       }
     }
 
@@ -756,7 +766,7 @@ export async function gerarSenhaPagamento(
       await sendWhatsAppMessage(telefone, mensagem, {
         franquiaId,
         unidadeId: senha.unidade_id,
-      });
+      }, { whatsappAtivo });
     }
   } catch (whatsError) {
     console.error('Erro ao enviar WhatsApp ao gerar senha de pagamento:', whatsError);
@@ -805,19 +815,21 @@ export async function chamarSenhaPagamento(senhaId: string) {
   // Buscar telefone e nome do entregador, se existir vínculo
   let telefone: string | null = null;
   let nomeMotoboy: string | null = senha.entregador_nome;
+  let whatsappAtivo2 = true;
 
   if (senha.entregador_id) {
-    const { data: entregador, error: entregadorError } = await supabase
+    const { data: entregador, error: entregadorError } = await (supabase
       .from('entregadores')
-      .select('telefone, nome')
+      .select('telefone, nome, whatsapp_ativo')
       .eq('id', senha.entregador_id)
-      .maybeSingle();
+      .maybeSingle() as any);
 
     if (entregadorError) {
       console.error('Erro ao buscar entregador da senha de pagamento:', entregadorError);
     } else if (entregador) {
       telefone = entregador.telefone as string;
       nomeMotoboy = (entregador.nome as string) || nomeMotoboy;
+      whatsappAtivo2 = entregador.whatsapp_ativo !== false;
     }
   }
 
@@ -851,7 +863,7 @@ export async function chamarSenhaPagamento(senhaId: string) {
     await sendWhatsAppMessage(telefone, mensagem, {
       franquiaId: franquiaId,
       unidadeId: senha.unidade_id,
-    });
+    }, { whatsappAtivo: whatsappAtivo2 });
   }
 
   // Atualizar status da senha para chamado

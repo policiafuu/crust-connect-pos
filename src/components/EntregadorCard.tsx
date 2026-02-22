@@ -2,7 +2,7 @@ import { Entregador } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { StatusBadge } from './StatusBadge';
 import { UnitBadge } from './UnitSelector';
-import { Phone, User, Edit, Trash2, ToggleLeft, ToggleRight, Volume2 } from 'lucide-react';
+import { Phone, User, Edit, Trash2, ToggleLeft, ToggleRight, Volume2, MessageSquareOff } from 'lucide-react';
 
 interface EntregadorCardProps {
   entregador: Entregador;
@@ -63,6 +63,15 @@ export function EntregadorCard({
               >
                 <Volume2 className="w-3 h-3" />
                 Voz
+              </span>
+            )}
+            {entregador.whatsapp_ativo === false && (
+              <span
+                className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-destructive/10 text-destructive"
+                title="WhatsApp desativado para este motoboy"
+              >
+                <MessageSquareOff className="w-3 h-3" />
+                Sem WhatsApp
               </span>
             )}
           </div>
