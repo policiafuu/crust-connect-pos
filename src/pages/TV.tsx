@@ -15,7 +15,7 @@ import {
   SenhaPagamento,
   fetchSenhasPagamento,
 } from '@/lib/api';
-import { Pizza, User, Volume2, VolumeX, RotateCcw, Package, UserPlus, Trophy, Wine } from 'lucide-react';
+import { Pizza, User, Volume2, VolumeX, RotateCcw, Package, UserPlus, Trophy, Wine, Volume1 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -102,6 +102,9 @@ export default function TV() {
   const [displayingCalled, setDisplayingCalled] = useState<CalledEntregadorInfo | null>(null);
   const [displayingPagamento, setDisplayingPagamento] = useState<SenhaPagamento | null>(null);
   const [showDeliveries, setShowDeliveries] = useState(false); // Sempre false - não oscila mais
+  const [audioUnlocked, setAudioUnlocked] = useState(() => {
+    return sessionStorage.getItem('tv_audio_unlocked') === 'true';
+  });
   const { speak } = useTTS();
   const lastCacheClean = useRef<number>(Date.now());
   const lastCallTime = useRef<number>(0);
@@ -503,7 +506,10 @@ export default function TV() {
   // Play audio and TTS quando alguém é chamado
   const handleCallAnnouncement = useCallback(
     async (entregador: Entregador, hasBebida: boolean) => {
-      if (isMuted) return;
+      if (isMuted || !audioUnlocked) {
+        if (!audioUnlocked) console.warn('🔇 Áudio bloqueado: clique em "Ativar Áudio" primeiro');
+        return;
+      }
 
       // Primeiro toca o toque completo, depois os áudios de voz
       if (audioRef.current) {
@@ -534,7 +540,8 @@ export default function TV() {
             audioElement.addEventListener('ended', onEnded);
             audioElement.addEventListener('error', onError);
 
-            audioElement.play().catch(() => {
+            audioElement.play().catch((err) => {
+              console.error('🔇 Erro ao tocar ringtone:', err.message);
               cleanup();
               resolve();
             });
@@ -547,7 +554,7 @@ export default function TV() {
       // Tocar sequência de áudios pré-gravados (nome -> bag -> bebida)
       await playAudioSequence(entregador, entregador.tipo_bag, hasBebida);
     },
-    [isMuted, playAudioSequence, tvTtsConfig.volume, tvTtsConfig.ringtone_id],
+    [isMuted, audioUnlocked, playAudioSequence, tvTtsConfig.volume, tvTtsConfig.ringtone_id],
   );
 
 
@@ -767,6 +774,66 @@ export default function TV() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Hidden audio element */}
       <audio ref={audioRef} preload="auto" />
+
+      {/* Overlay de ativação de áudio */}
+      {!audioUnlocked && (
+        <div className="fixed inset-0 z-[99999] bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center gap-8">
+          <div className="w-28 h-28 rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
+            <Volume1 className="w-14 h-14 text-primary" />
+          </div>
+          <div className="text-center space-y-3 max-w-md px-6">
+            <h2 className="text-3xl font-bold text-foreground">Ativar Áudio da TV</h2>
+            <p className="text-muted-foreground text-lg">
+              Clique no botão abaixo para ativar o som das chamadas e da voz dos motoboys.
+            </p>
+          </div>
+          <Button
+            size="lg"
+            className="text-xl px-12 py-6 h-auto gap-3"
+            onClick={() => {
+              // Desbloquear AudioContext do navegador
+              try {
+                const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+                const oscillator = ctx.createOscillator();
+                const gain = ctx.createGain();
+                gain.gain.value = 0; // silencioso
+                oscillator.connect(gain);
+                gain.connect(ctx.destination);
+                oscillator.start(0);
+                oscillator.stop(0.01);
+                setTimeout(() => ctx.close(), 100);
+              } catch (e) {
+                console.log('AudioContext unlock attempt:', e);
+              }
+
+              // Desbloquear Web Speech API
+              try {
+                const utterance = new SpeechSynthesisUtterance('');
+                utterance.volume = 0;
+                window.speechSynthesis.speak(utterance);
+              } catch (e) {
+                console.log('SpeechSynthesis unlock attempt:', e);
+              }
+
+              // Desbloquear elemento de áudio
+              if (audioRef.current) {
+                audioRef.current.volume = 0;
+                audioRef.current.play().then(() => {
+                  audioRef.current!.pause();
+                  audioRef.current!.volume = 1;
+                }).catch(() => {});
+              }
+
+              setAudioUnlocked(true);
+              sessionStorage.setItem('tv_audio_unlocked', 'true');
+              toast.success('🔊 Áudio ativado com sucesso!');
+            }}
+          >
+            <Volume2 className="w-7 h-7" />
+            Ativar Áudio
+          </Button>
+        </div>
+      )}
 
       {/* Animação Premium de Chamada (entrega ou pagamento) */}
        <TVCallAnimation
