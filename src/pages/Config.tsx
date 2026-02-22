@@ -801,6 +801,43 @@ export default function Config() {
                 >
                   Limpar áudios bags
                 </Button>
+                {/* Importar áudio de bag */}
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="audio/mpeg,audio/mp3"
+                    multiple
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    onChange={async (e) => {
+                      const files = e.target.files;
+                      if (!files || !user?.franquiaId) return;
+                      let ok = 0;
+                      for (const file of Array.from(files)) {
+                        // Match filename to bag by name
+                        const matchBag = franquiaBagTipos.find(
+                          (b) => file.name.toLowerCase().includes(b.nome.toLowerCase()) ||
+                                 file.name.replace('.mp3', '') === b.id
+                        );
+                        const bagId = matchBag?.id || file.name.replace('.mp3', '');
+                        const path = `${user.franquiaId}/bags/${bagId}.mp3`;
+                        const { error } = await supabase.storage
+                          .from('motoboy_voices')
+                          .upload(path, file, { upsert: true, contentType: 'audio/mpeg' });
+                        if (!error) ok++;
+                      }
+                      refetchAudios();
+                      toast.success(`${ok} áudios de bag importados!`);
+                      e.target.value = '';
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="gap-2 text-xs sm:text-sm pointer-events-none"
+                  >
+                    Importar Áudios Bags
+                  </Button>
+                </div>
                 <Button
                   type="button"
                   variant="destructive"
@@ -1169,6 +1206,59 @@ export default function Config() {
                 </div>
               )}
             </div>
+
+            {/* WhatsApp toggle por motoboy */}
+            {editingEntregador && (
+              <div className="flex items-center justify-between border border-border rounded-lg p-4">
+                <div>
+                  <Label>Mensagens WhatsApp</Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Se desativado, este motoboy não receberá mensagens via WhatsApp.
+                  </p>
+                </div>
+                <Switch
+                  checked={editingEntregador.whatsapp_ativo !== false}
+                  onCheckedChange={(checked) => {
+                    updateMutation.mutate({
+                      id: editingEntregador.id,
+                      data: { whatsapp_ativo: checked },
+                    });
+                    setEditingEntregador({ ...editingEntregador, whatsapp_ativo: checked });
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Importar áudio próprio do motoboy */}
+            {editingEntregador && (
+              <div className="space-y-3 border border-border rounded-lg p-4 bg-secondary/40">
+                <Label>Importar áudio próprio</Label>
+                <p className="text-xs text-muted-foreground">
+                  Envie um arquivo MP3 personalizado para usar como chamada deste motoboy na TV.
+                </p>
+                <Input
+                  type="file"
+                  accept="audio/mpeg,audio/mp3"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file || !user?.franquiaId || !editingEntregador) return;
+                    try {
+                      const path = `${user.franquiaId}/${editingEntregador.id}.mp3`;
+                      const { error: uploadError } = await supabase.storage
+                        .from('motoboy_voices')
+                        .upload(path, file, { upsert: true, contentType: 'audio/mpeg' });
+                      if (uploadError) throw uploadError;
+                      const updated = await updateEntregador(editingEntregador.id, { tts_voice_path: path });
+                      setEditingEntregador(updated);
+                      queryClient.invalidateQueries({ queryKey: ['entregadores'] });
+                      toast.success('Áudio importado com sucesso!');
+                    } catch (err) {
+                      toast.error('Erro ao importar áudio');
+                    }
+                  }}
+                />
+              </div>
+            )}
 
             {/* Voz fixa ElevenLabs por motoboy */}
             {editingEntregador && (

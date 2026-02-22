@@ -35,6 +35,7 @@ export interface Entregador {
   tipo_bag?: TipoBag;
   has_bebida?: boolean;
   tts_voice_path?: string | null;
+  whatsapp_ativo?: boolean;
 }
 
 
@@ -155,7 +156,7 @@ export async function fetchEntregadores(filters?: {
 }): Promise<Entregador[]> {
   let query = supabase
     .from('entregadores')
-    .select('id, nome, telefone, status, unidade, ativo, created_at, updated_at, fila_posicao, dias_trabalho, usar_turno_padrao, turno_inicio, turno_fim, hora_saida, tipo_bag, tts_voice_path')
+    .select('id, nome, telefone, status, unidade, ativo, created_at, updated_at, fila_posicao, dias_trabalho, usar_turno_padrao, turno_inicio, turno_fim, hora_saida, tipo_bag, tts_voice_path, whatsapp_ativo')
     .order('fila_posicao', { ascending: true });
 
   if (filters?.unidade) {

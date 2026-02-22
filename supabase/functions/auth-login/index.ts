@@ -1,11 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { compareSync, hashSync } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { create, getNumericDate, Header, Payload } from "https://deno.land/x/djwt@v2.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 function getEnv(name: string): string {
@@ -139,7 +139,8 @@ serve(async (req) => {
     let needsRehash = false;
 
     if (storedHash.startsWith("$2")) {
-      passwordOk = await bcrypt.compare(plainPassword, storedHash);
+      // Use compareSync instead of compare to avoid Worker issue in Deno edge runtime
+      passwordOk = compareSync(plainPassword, storedHash);
     } else {
       // Compatibilidade com senhas antigas em texto plano
       passwordOk = storedHash === plainPassword;
@@ -155,7 +156,8 @@ serve(async (req) => {
 
     if (needsRehash) {
       try {
-        const newHash = await bcrypt.hash(plainPassword);
+        // Use hashSync instead of hash to avoid Worker issue in Deno edge runtime
+        const newHash = hashSync(plainPassword);
         await supabase
           .from("system_users")
           .update({ password_hash: newHash })
@@ -178,7 +180,7 @@ serve(async (req) => {
       unidadeId: data.unidade_id ?? null,
     };
 
-    // Buscar unidades disponíveis (segue mesma lógica do AuthContext atual)
+    // Buscar unidades disponíveis
     let availableUnits: Array<{ id: string; nome_loja: string; unidade_nome: string }> | undefined;
 
     if (data.franquia_id) {
@@ -220,7 +222,7 @@ serve(async (req) => {
   } catch (err) {
     console.error("Erro no auth-login:", err);
     return new Response(
-      JSON.stringify({ error: "Erro interno de autenticação" }),
+      JSON.stringify({ error: "Erro interno de autenticação", details: JSON.stringify(err) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }

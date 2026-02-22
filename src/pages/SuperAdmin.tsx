@@ -23,6 +23,7 @@ import { FranquiaBagsSection } from '@/components/FranquiaBagsSection';
 import { PlanosModulosSection } from '@/components/PlanosModulosSection';
 import { FranquiaDescontosPanel } from '@/components/FranquiaDescontosPanel';
 import { BillingGatewayConfigPanel } from '@/components/BillingGatewayConfigPanel';
+import { DataExportImport } from '@/components/DataExportImport';
 
 interface Franquia {
   id: string;
@@ -926,6 +927,7 @@ export default function SuperAdmin() {
               <TabsTrigger value="planos">Planos</TabsTrigger>
               <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
               <TabsTrigger value="config">Config</TabsTrigger>
+              <TabsTrigger value="dados">Dados</TabsTrigger>
             </TabsList>
 
           {/* Aba Geral */}
@@ -1435,6 +1437,11 @@ export default function SuperAdmin() {
           {/* Aba Config */}
           <TabsContent value="config" className="space-y-6">
             <BillingGatewayConfigPanel />
+          </TabsContent>
+
+          {/* Aba Dados (Export/Import) */}
+          <TabsContent value="dados" className="space-y-6">
+            <DataExportImport />
           </TabsContent>
         </Tabs>
       </div>
